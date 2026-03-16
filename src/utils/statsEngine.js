@@ -1,6 +1,7 @@
 import * as ss from 'simple-statistics';
+import { jStat } from 'jstat';
 
-export function calculateStats(data, columnTypes) {
+export function calculateStats(data, columnTypes, groupingVariable = '') {
     const stats = [];
     const headers = Object.keys(columnTypes);
 
@@ -24,7 +25,10 @@ export function calculateStats(data, columnTypes) {
             max: '',
             pValue: '',
             isNormal: '',
-            normality: ''
+            normality: '',
+            isHomogeneous: '-',
+            homogeneity: '-',
+            recommendedTest: '-'
         };
 
         if (type === 'ratio' || type === 'interval') {
@@ -88,6 +92,117 @@ export function calculateStats(data, columnTypes) {
                     } else {
                         result.pValue = "N<3";
                         result.isNormal = "N/A";
+                    }
+
+                    // Levene's Test for Homogeneity of Variances
+                    if (groupingVariable && columnTypes[groupingVariable]) {
+                        // Extract paired valid data: [Value, Group] 
+                        // Exclude rows where either target or group is missing/invalid
+                        let validPairs = [];
+                        for (let i = 0; i < data.length; i++) {
+                            const v = data[i][header];
+                            const g = data[i][groupingVariable];
+                            if (v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && g !== null && g !== undefined && g !== '') {
+                                validPairs.push({ val: Number(v), group: String(g) });
+                            }
+                        }
+
+                        // Group the values
+                        const groups = {};
+                        validPairs.forEach(pair => {
+                            if (!groups[pair.group]) groups[pair.group] = [];
+                            groups[pair.group].push(pair.val);
+                        });
+
+                        const groupNames = Object.keys(groups);
+                        const k = groupNames.length;
+                        const N = validPairs.length;
+
+                        if (k >= 2 && N > k) {
+                            try {
+                                // 1. Calculate the mean for each group
+                                const groupMeans = {};
+                                groupNames.forEach(g => {
+                                    groupMeans[g] = ss.mean(groups[g]);
+                                });
+
+                                // 2. Compute absolute deviations (Z_ij)
+                                const Z = {};
+                                let globalZSum = 0;
+                                let globalZCount = 0;
+                                groupNames.forEach(g => {
+                                    Z[g] = groups[g].map(val => Math.abs(val - groupMeans[g]));
+                                    globalZSum += ss.sum(Z[g]);
+                                    globalZCount += Z[g].length;
+                                });
+
+                                const globalZMean = globalZSum / globalZCount;
+
+                                // 3. Compute W (F-statistic for One-Way ANOVA on Z_ij)
+                                let SSTR = 0; // Treatment Sum of Squares
+                                let SSE = 0;  // Error Sum of Squares
+
+                                groupNames.forEach(g => {
+                                    const n_i = Z[g].length;
+                                    const mean_Z_i = ss.mean(Z[g]);
+                                    
+                                    SSTR += n_i * Math.pow(mean_Z_i - globalZMean, 2);
+
+                                    Z[g].forEach(z_ij => {
+                                        SSE += Math.pow(z_ij - mean_Z_i, 2);
+                                    });
+                                });
+
+                                const df1 = k - 1;
+                                const df2 = N - k;
+
+                                const MSTR = SSTR / df1;
+                                const MSE = SSE / df2;
+
+                                const W = MSTR / MSE;
+
+                                // 4. Compute P-value using F-distribution
+                                // jStat.centralF.cdf(x, df1, df2) gives P(X <= x)
+                                // We want the upper tail P(X > x)
+                                const pValLevene = 1 - jStat.centralF.cdf(W, df1, df2);
+
+                                result.homogeneity = `p=${pValLevene.toFixed(4)}`;
+                                result.isHomogeneous = pValLevene < 0.05 ? "No" : "Yes"; // p < 0.05 -> variances are NOT equal
+
+                                // Recommendation Logic
+                                const normal = result.isNormal === "Yes" || result.isNormal === "Yes (Approx)";
+                                const homog = result.isHomogeneous === "Yes";
+                                
+                                if (k === 2) {
+                                    if (normal) {
+                                        result.recommendedTest = homog ? "indTTest" : "welchTTest";
+                                    } else {
+                                        result.recommendedTest = "mannWhitneyU";
+                                    }
+                                } else if (k > 2) {
+                                    if (normal) {
+                                        result.recommendedTest = homog ? "oneWayAnova" : "welchAnova";
+                                    } else {
+                                        result.recommendedTest = "kruskalWallis";
+                                    }
+                                }
+
+                            } catch (err) {
+                                console.error("Levene's Test error:", err);
+                                result.isHomogeneous = "Error";
+                                result.homogeneity = "Error";
+                                result.recommendedTest = "Error"
+                            }
+                        } else {
+                            result.isHomogeneous = "N/A";
+                            result.homogeneity = k < 2 ? "Need 2+ groups" : "Not enough data";
+                            result.recommendedTest = "-"
+                        }
+                    } else {
+                        // No grouping variable selected
+                        result.isHomogeneous = "-";
+                        result.homogeneity = "-";
+                        result.recommendedTest = "-"
                     }
                 }
             }

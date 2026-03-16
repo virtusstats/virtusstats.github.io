@@ -15,7 +15,7 @@ function App() {
 
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
             {t.heroTitle} <span className="text-blue-600">{t.heroTitleHighlight}</span>
@@ -54,7 +54,7 @@ function App() {
             <div className="mt-8 text-center pb-8">
               <button
                 onClick={() => setStep(0)}
-                className="text-slate-400 hover:text-blue-600 transition-colors text-sm font-medium"
+                className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold shadow-md hover:shadow-lg transition-all"
               >
                 {t.startOver}
               </button>

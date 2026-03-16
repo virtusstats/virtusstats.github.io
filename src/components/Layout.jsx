@@ -9,22 +9,22 @@ export default function Layout({ children }) {
     return (
         <div className="min-h-screen flex flex-col font-sans text-slate-900 bg-slate-50">
             <header className="bg-white border-b border-slate-200 sticky top-0 z-50 bg-opacity-80 backdrop-blur-md">
-                <div className="container mx-auto px-4 h-16 flex items-center justify-between">
+                <div className="container mx-auto px-4 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src={logo} alt="VirtusStat Logo" className="h-10 w-auto" />
-                        <span className="text-xl font-bold bg-gradient-to-r from-blue-700 to-slate-700 bg-clip-text text-transparent">
+                        <img src={logo} alt="VirtusStat Logo" className="h-20 w-auto" />
+                        <span className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-slate-700 bg-clip-text text-transparent">
                             {t.brandName}
                         </span>
                     </div>
                     <nav className="flex items-center gap-6">
                         <button
                             onClick={toggleLanguage}
-                            className="flex items-center gap-2 text-slate-600 hover:text-blue-700 transition-colors font-medium text-sm"
+                            className="flex items-center gap-2 text-slate-600 hover:text-blue-700 transition-colors font-medium text-m"
                         >
                             <Globe className="w-4 h-4" />
                             {language === 'en' ? 'TR' : 'EN'}
                         </button>
-                        <a href="#" className="text-slate-600 hover:text-blue-700 font-medium transition-colors">
+                        <a href="https://virtusrnd.github.io/" className="text-slate-600 hover:text-blue-700 font-medium text-m transition-colors">
                             {t.contactSupport}
                         </a>
                     </nav>
@@ -37,7 +37,7 @@ export default function Layout({ children }) {
 
             <footer className="bg-white border-t border-slate-200 py-8">
                 <div className="container mx-auto px-4 text-center text-slate-500 text-sm">
-                    <p>&copy; {new Date().getFullYear()} {t.footerRights}</p>
+                    <p>&copy; {new Date().getFullYear()} <a href="https://virtusrnd.github.io/">{t.footerRights}</a></p>
                 </div>
             </footer>
         </div>
