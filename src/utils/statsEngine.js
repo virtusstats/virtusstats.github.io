@@ -1,5 +1,6 @@
 import * as ss from 'simple-statistics';
-import { jStat } from 'jstat';
+import jstat from 'jstat'; // CommonJS package: default import works in both Vite and Node (npm test)
+const { jStat } = jstat;
 
 export function calculateStats(data, columnTypes, groupingVariable = '') {
     const stats = [];
@@ -55,16 +56,9 @@ export function calculateStats(data, columnTypes, groupingVariable = '') {
                     result.q3 = ss.quantile(numericValues, 0.75).toFixed(2);
                     result.iqr = ss.interquartileRange(numericValues).toFixed(2);
 
-                    // Formal Normality Test: Jarque-Bera
-                    // Robust, no dependencies, calculates P-value based on Skewness and Kurtosis
-                    // JB = (n/6) * (S^2 + (1/4)*(K-3)^2)
-                    // Note: simple-statistics sampleKurtosis returns "excess kurtosis" directly or raw?
-                    // Docs: sampleKurtosis gives excess kurtosis? No, usually libraries give regular kurtosis.
-                    // Implementation of ss.sampleKurtosis: "This calculates the excess kurtosis."
-                    // If it is excess kurtosis, then we use (K)^2 directly (since K-3 is already done).
-                    // Wait, let's verify standard definition. JB uses (K-3)^2 where K is raw moment. 
-                    // Excess kurtosis IS K-3. So if ss gives excess, we just square it.
-
+                    // Normality: Jarque-Bera, JB = (n/6) * (S^2 + K^2/4) with K = excess kurtosis
+                    // (ss.sampleKurtosis already subtracts 3). H0 is normality, so p < 0.05 means NOT normal.
+                    // shortcut: JB is asymptotic and weak for small n; switch to Shapiro-Wilk if n < ~50 matters.
                     if (numericValues.length >= 3) {
                         try {
                             const n = numericValues.length;
@@ -79,10 +73,7 @@ export function calculateStats(data, columnTypes, groupingVariable = '') {
 
                             result.pValue = pValue.toFixed(4);
 
-                            // User Request: "p değeri 0.05 ten küçükse normal dağılsın"
-                            // Translates to: If p < 0.05, then Normal = Yes.
-                            // (Note: This is inverse of standard JB/SW test logic where p < 0.05 means reject null hypothesis of normality).
-                            result.isNormal = pValue < 0.05 ? "Yes" : "No";
+                            result.isNormal = pValue < 0.05 ? "No" : "Yes"; // p < 0.05 rejects normality
                             result.normality = `p=${pValue.toFixed(4)}`; // (JB=${jb.toFixed(2)})
 
                         } catch (err) {
