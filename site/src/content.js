@@ -1,10 +1,10 @@
 // Page copy for the landing site. Edit freely; App.jsx only lays it out.
 export default {
-  "wordmark": "virtusstats",
+  "wordmark": "tabula",
   "lang": "tr",
   "badge": "Web uygulaması",
   "tagline": "Veri dosyanı bırak, tablon hazır.",
-  "description": "Virtus Stats bir CSV ya da Excel dosyasını tarayıcıda okur. Her sütun için ölçek türünü seçersin; ortalama, medyan, çeyrekler, standart sapma, normallik ve gruplar arası varyans homojenliği tablosu ile grafikler anında gelir. Dosya hiçbir yere yüklenmez.",
+  "description": "Tabula bir CSV ya da Excel dosyasını tarayıcıda okur. Her sütun için ölçek türünü seçersin; ortalama, medyan, çeyrekler, standart sapma, normallik ve gruplar arası varyans homojenliği tablosu ile grafikler anında gelir. Dosya hiçbir yere yüklenmez.",
   "ctas": [
     {
       "label": "Uygulamayı aç",
@@ -69,6 +69,6 @@ export default {
     "jStat",
     "SheetJS"
   ],
-  "note": "Canlı sürüm: virtusstats.github.io",
+  "note": "Tabula Latincede \"tablo\" demek. Canlı sürüm: virtusstats.github.io",
   "repo": "https://github.com/virtusstats/virtusstats.github.io"
 };

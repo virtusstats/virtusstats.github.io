@@ -23,7 +23,7 @@ export default function AnalysisDashboard({ data, columnTypes }) {
         const ws = XLSX.utils.json_to_sheet(stats);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Summary Statistics");
-        XLSX.writeFile(wb, "VirtusStat_Analysis_Report.xlsx");
+        XLSX.writeFile(wb, "Tabula_Analysis_Report.xlsx");
     };
 
     return (

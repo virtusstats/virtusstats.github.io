@@ -1,7 +1,7 @@
 export const translations = {
     en: {
         // Layout
-        brandName: "VirtusStat",
+        brandName: "Tabula",
         contactSupport: "Contact Support",
         footerRights: "Virtus Arge Yazılım Anonim Şirketi. All rights reserved.",
 
@@ -98,7 +98,7 @@ export const translations = {
     },
     tr: {
         // Layout
-        brandName: "VirtusStat",
+        brandName: "Tabula",
         contactSupport: "Destek İletişim",
         footerRights: "Virtus Arge Yazılım Anonim Şirketi. Tüm hakları saklıdır.",
 

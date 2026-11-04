@@ -11,7 +11,7 @@ export default function Layout({ children }) {
             <header className="bg-white border-b border-slate-200 sticky top-0 z-50 bg-opacity-80 backdrop-blur-md">
                 <div className="container mx-auto px-4 h-20 flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                        <img src={logo} alt="VirtusStat Logo" className="h-20 w-auto" />
+                        <img src={logo} alt="Virtus Arge logo" className="h-20 w-auto" />
                         <span className="text-3xl font-bold bg-gradient-to-r from-blue-700 to-slate-700 bg-clip-text text-transparent">
                             {t.brandName}
                         </span>

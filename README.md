@@ -1,6 +1,6 @@
-# Virtus Stats
+# Tabula
 
-Browser-based descriptive statistics for a CSV or Excel file (live at https://virtusstats.github.io/).
+Tabula (Latin for "table"; formerly Virtus Stats) is browser-based descriptive statistics for a CSV or Excel file (live at https://virtusstats.github.io/).
 Upload a file, mark each column as nominal, ordinal, interval or ratio, optionally pick a grouping
 variable, and get per-column descriptives (mean, median, mode, quartiles, IQR, SD, min/max), a
 Jarque-Bera normality p-value, Levene's test for equal variances across groups, a suggested
