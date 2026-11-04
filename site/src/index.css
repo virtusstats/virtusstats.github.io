@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+/* Bricolage Grotesque (SIL OFL, public/fonts/OFL.txt), same family as the Kesit wordmark. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("/fonts/BricolageGrotesque-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Bricolage Grotesque"; src: url("/fonts/BricolageGrotesque-SemiBold.ttf") format("truetype"); font-weight: 600; font-display: swap; }
+@font-face { font-family: "Bricolage Display"; src: url("/fonts/BricolageGrotesque-Display.ttf") format("truetype"); font-weight: 800; font-display: swap; }
+
+@theme {
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Display", "Bricolage Grotesque", ui-sans-serif, sans-serif;
+  --color-primary: #123C69;
+  --color-accent: #2EC4B6;
+  --color-soft: color-mix(in oklab, #123C69 9%, white);
+  --color-canvas: #fbfbf9;
+  --color-ink: #1b1c22;
+  --color-muted: #5f6270;
+  --color-line: #e4e4ea;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-soft: color-mix(in oklab, #123C69 22%, #121318);
+    --color-canvas: #121318;
+    --color-ink: #ececf2;
+    --color-muted: #a3a5b3;
+    --color-line: #2a2c36;
+  }
+}
+
+html { scroll-behavior: smooth; }
+body { @apply bg-canvas text-ink font-sans antialiased; }
