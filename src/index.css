@@ -1,1 +1,21 @@
 @import "tailwindcss";
+
+/* Tabula brand: Bricolage Grotesque (SIL OFL, public/fonts/OFL.txt), deep blue #123C69 + teal #2EC4B6.
+   The app's blue-* utilities are remapped to the brand scale here, so components need no changes. */
+@font-face { font-family: "Bricolage Grotesque"; src: url("/fonts/BricolageGrotesque-Regular.ttf") format("truetype"); font-weight: 400; font-display: swap; }
+@font-face { font-family: "Bricolage Grotesque"; src: url("/fonts/BricolageGrotesque-SemiBold.ttf") format("truetype"); font-weight: 500 700; font-display: swap; }
+
+@theme {
+  --font-sans: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  --color-blue-50: #eef4fa;
+  --color-blue-100: #d8e5f1;
+  --color-blue-200: #b3cce3;
+  --color-blue-300: #84abd0;
+  --color-blue-400: #4f84b8;
+  --color-blue-500: #2a6aa3;
+  --color-blue-600: #1b5288;
+  --color-blue-700: #123c69;
+  --color-blue-800: #0e2f52;
+  --color-blue-900: #0a223c;
+  --color-accent: #2ec4b6;
+}
