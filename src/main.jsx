@@ -12,3 +12,10 @@ createRoot(document.getElementById('root')).render(
     </LanguageProvider>
   </StrictMode>,
 )
+
+// Fade out the splash from index.html once the app has mounted; keep it up at least 700 ms so it does not just flash.
+const splash = document.getElementById('splash');
+setTimeout(() => {
+  splash?.classList.add('hide');
+  setTimeout(() => splash?.remove(), 400);
+}, Math.max(0, 700 - performance.now()));
