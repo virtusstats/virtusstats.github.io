@@ -1,23 +1,63 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Download, Phone, CheckCircle2, XCircle } from 'lucide-react';
-import { calculateStats } from '../utils/statsEngine';
+import { CheckCircle2, Download, Link2, Save, Upload, XCircle } from 'lucide-react';
 import * as XLSX from 'xlsx';
+import { calculateStats } from '../utils/statsEngine';
+import { isCategoricalType, isNumericType, runAll, sanitizeConfig } from '../utils/analyses';
+import { downloadAnalysis, parseShare, shareUrl } from '../utils/share';
 import { useLanguage } from '../context/LanguageContext';
 import DataVisualization from './DataVisualization';
+import QualityPanel from './analysis/QualityPanel';
+import GroupsPanel from './analysis/GroupsPanel';
+import PairedPanel from './analysis/PairedPanel';
+import CategoricalPanel from './analysis/CategoricalPanel';
+import CorrelationPanel from './analysis/CorrelationPanel';
+import RegressionPanel from './analysis/RegressionPanel';
+import ReportPanel from './analysis/ReportPanel';
+import { Select } from './analysis/ui';
 
-export default function AnalysisDashboard({ data, columnTypes }) {
+const TABS = ['summary', 'quality', 'groups', 'paired', 'categorical', 'correlation', 'regression', 'visualize', 'report'];
+
+function ShareBar({ columnTypes, config, onLoad }) {
     const { t } = useLanguage();
-    const [groupingVariable, setGroupingVariable] = React.useState('');
-    const [activeTab, setActiveTab] = React.useState('analysis');
+    const file = useRef(null);
+    const [msg, setMsg] = useState('');
+    const flash = text => { setMsg(text); setTimeout(() => setMsg(''), 2500); };
+    const button = 'inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-blue-700 border border-slate-200 hover:border-blue-300 bg-white rounded-lg px-3 py-1.5 transition-colors';
+    return (
+        <div className="flex flex-wrap items-center justify-center gap-2">
+            <button type="button" className={button} onClick={() => downloadAnalysis(columnTypes, config)}><Save className="w-4 h-4" />{t.saveAnalysis}</button>
+            <button type="button" className={button} onClick={() => file.current.click()}><Upload className="w-4 h-4" />{t.loadAnalysis}</button>
+            <button type="button" className={button} onClick={async () => {
+                const url = shareUrl(columnTypes, config);
+                history.replaceState(null, '', url);
+                try { await navigator.clipboard.writeText(url); flash(t.linkCopied); } catch { flash(url); }
+            }}><Link2 className="w-4 h-4" />{t.copyLink}</button>
+            <input ref={file} type="file" accept="application/json,.json" className="hidden" onChange={async e => {
+                const f = e.target.files[0];
+                e.target.value = '';
+                if (!f) return;
+                const parsed = parseShare(await f.text());
+                if (parsed) { onLoad(parsed.config); flash(t.analysisLoaded); } else flash(t.loadError);
+            }} />
+            <span className="w-full text-center text-xs text-slate-400">{msg || t.shareNote}</span>
+        </div>
+    );
+}
 
-    const stats = useMemo(() => calculateStats(data, columnTypes, groupingVariable), [data, columnTypes, groupingVariable]);
+export default function AnalysisDashboard({ data, columnTypes, initialConfig }) {
+    const { t } = useLanguage();
+    const [config, setConfig] = useState(() => sanitizeConfig(initialConfig, columnTypes));
+    const [activeTab, setActiveTab] = useState('summary');
+    const groupingVariable = config.groupingVariable;
 
-    const potentialGroups = useMemo(() => {
-        return Object.keys(columnTypes).filter(col => 
-            columnTypes[col] === 'nominal' || columnTypes[col] === 'ordinal'
-        );
-    }, [columnTypes]);
+    const results = useMemo(() => runAll(data, columnTypes, config), [data, columnTypes, config]);
+    const stats = useMemo(() => calculateStats(results.clean, columnTypes, groupingVariable), [results.clean, columnTypes, groupingVariable]);
+
+    const columns = Object.keys(columnTypes);
+    const numeric = columns.filter(c => isNumericType(columnTypes[c]));
+    const categorical = columns.filter(c => isCategoricalType(columnTypes[c]));
+    const panelProps = { data, columnTypes, config, setConfig, results, numeric, categorical, columns };
 
     const handleDownload = () => {
         const ws = XLSX.utils.json_to_sheet(stats);
@@ -33,54 +73,41 @@ export default function AnalysisDashboard({ data, columnTypes }) {
             transition={{ duration: 0.5 }}
             className="space-y-6"
         >
-            {/* Tab Navigation */}
-            <div className="flex justify-center mb-6">
-                <div className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 inline-flex">
-                    <button
-                        onClick={() => setActiveTab('analysis')}
-                        className={`px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                            activeTab === 'analysis' 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                    >
-                        {t.analyzeTab}
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('visualize')}
-                        className={`px-8 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
-                            activeTab === 'visualize' 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
-                        }`}
-                    >
-                        {t.visualizeTab}
-                    </button>
+            <div className="flex flex-col items-center gap-4 print:hidden">
+                <div className="max-w-full overflow-x-auto">
+                    <div role="tablist" className="bg-white p-1 rounded-xl shadow-sm border border-slate-200 inline-flex whitespace-nowrap">
+                        {TABS.map(tab => (
+                            <button
+                                key={tab}
+                                role="tab"
+                                aria-selected={activeTab === tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`px-4 py-2.5 rounded-lg font-semibold text-sm transition-all duration-200 ${
+                                    activeTab === tab
+                                    ? 'bg-blue-600 text-white shadow-md'
+                                    : 'text-slate-500 hover:text-slate-900 hover:bg-slate-50'
+                                }`}
+                            >
+                                {t[`tab_${tab}`]}
+                            </button>
+                        ))}
+                    </div>
                 </div>
+                <ShareBar columnTypes={columnTypes} config={config} onLoad={cfg => setConfig(sanitizeConfig(cfg, columnTypes))} />
             </div>
 
-            {/* Content Area */}
-            {activeTab === 'analysis' && (
+            {activeTab === 'summary' && (
                 <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden flex flex-col">
                     <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4">
                     <div>
                         <h2 className="text-2xl font-bold text-slate-800">{t.resultsTitle}</h2>
                         <p className="text-slate-500 text-sm">{t.resultsDesc}</p>
                     </div>
-                    
+
                     <div className="flex flex-col sm:flex-row items-center gap-4">
                         <div className="flex items-center gap-2">
                             <label className="text-sm font-medium text-slate-700">{t.groupingVariable}:</label>
-                            <select 
-                                value={groupingVariable}
-                                onChange={(e) => setGroupingVariable(e.target.value)}
-                                className="border border-slate-300 rounded-lg px-3 py-1.5 object-contain text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                            >
-                                <option value="">{t.noGrouping}</option>
-                                {potentialGroups.map(group => (
-                                    <option key={group} value={group}>{group}</option>
-                                ))}
-                            </select>
+                            <Select value={groupingVariable} onChange={v => setConfig(c => ({ ...c, groupingVariable: v }))} options={categorical} placeholder={t.noGrouping} />
                         </div>
                         <button
                             onClick={handleDownload}
@@ -181,14 +208,22 @@ export default function AnalysisDashboard({ data, columnTypes }) {
                 </div>
             )}
 
+            {activeTab === 'quality' && <QualityPanel {...panelProps} />}
+            {activeTab === 'groups' && <GroupsPanel {...panelProps} />}
+            {activeTab === 'paired' && <PairedPanel {...panelProps} />}
+            {activeTab === 'categorical' && <CategoricalPanel {...panelProps} />}
+            {activeTab === 'correlation' && <CorrelationPanel {...panelProps} />}
+            {activeTab === 'regression' && <RegressionPanel {...panelProps} />}
+            {activeTab === 'report' && <ReportPanel {...panelProps} />}
+
             {activeTab === 'visualize' && (
                 <div className="h-[600px]">
-                    <DataVisualization data={data} columnTypes={columnTypes} />
+                    <DataVisualization data={results.clean} columnTypes={columnTypes} />
                 </div>
             )}
 
             {/* Contact Form Section */}
-            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white text-center mt-12 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl shadow-xl p-8 text-white text-center mt-12 relative overflow-hidden print:hidden">
                 <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full mix-blend-overlay filter blur-3xl -mr-20 -mt-20"></div>
                 <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-500/30 rounded-full mix-blend-overlay filter blur-3xl -ml-20 -mb-20"></div>
                 <h3 className="text-3xl font-bold mb-4 relative z-10">{t.contactTitle}</h3>

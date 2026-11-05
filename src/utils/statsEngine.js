@@ -1,6 +1,5 @@
 import * as ss from 'simple-statistics';
-import jstat from 'jstat'; // CommonJS package: default import works in both Vite and Node (npm test)
-const { jStat } = jstat;
+import { normality, compareGroups } from './analyses.js';
 
 export function calculateStats(data, columnTypes, groupingVariable = '') {
     const stats = [];
@@ -56,144 +55,28 @@ export function calculateStats(data, columnTypes, groupingVariable = '') {
                     result.q3 = ss.quantile(numericValues, 0.75).toFixed(2);
                     result.iqr = ss.interquartileRange(numericValues).toFixed(2);
 
-                    // Normality: Jarque-Bera, JB = (n/6) * (S^2 + K^2/4) with K = excess kurtosis
-                    // (ss.sampleKurtosis already subtracts 3). H0 is normality, so p < 0.05 means NOT normal.
-                    // shortcut: JB is asymptotic and weak for small n; switch to Shapiro-Wilk if n < ~50 matters.
-                    if (numericValues.length >= 3) {
-                        try {
-                            const n = numericValues.length;
-                            const s = ss.sampleSkewness(numericValues);
-                            const k = ss.sampleKurtosis(numericValues); // Excess kurtosis
-
-                            const jb = (n / 6) * (Math.pow(s, 2) + 0.25 * Math.pow(k, 2));
-
-                            // P-value for Chi-Square with 2 degrees of freedom
-                            // P = exp(-JB / 2)
-                            const pValue = Math.exp(-jb / 2);
-
-                            result.pValue = pValue.toFixed(4);
-
-                            result.isNormal = pValue < 0.05 ? "No" : "Yes"; // p < 0.05 rejects normality
-                            result.normality = `p=${pValue.toFixed(4)}`; // (JB=${jb.toFixed(2)})
-
-                        } catch (err) {
-                            console.error("JB Test error:", err);
-                            result.isNormal = "Error";
-                        }
+                    // Normality: Shapiro-Wilk (Jarque-Bera above 5000 values). H0 is normality, so p < 0.05 means NOT normal.
+                    const norm = normality(numericValues);
+                    if (norm) {
+                        result.pValue = norm.p.toFixed(4);
+                        result.isNormal = norm.normal ? "Yes" : "No";
+                        result.normality = `p=${norm.p.toFixed(4)}`;
                     } else {
-                        result.pValue = "N<3";
+                        result.pValue = numericValues.length < 3 ? "N<3" : "-";
                         result.isNormal = "N/A";
                     }
 
-                    // Levene's Test for Homogeneity of Variances
+                    // Levene and the suggested test come from the same group comparison the Groups tab runs.
                     if (groupingVariable && columnTypes[groupingVariable]) {
-                        // Extract paired valid data: [Value, Group] 
-                        // Exclude rows where either target or group is missing/invalid
-                        let validPairs = [];
-                        for (let i = 0; i < data.length; i++) {
-                            const v = data[i][header];
-                            const g = data[i][groupingVariable];
-                            if (v !== null && v !== undefined && v !== '' && !isNaN(Number(v)) && g !== null && g !== undefined && g !== '') {
-                                validPairs.push({ val: Number(v), group: String(g) });
-                            }
-                        }
-
-                        // Group the values
-                        const groups = {};
-                        validPairs.forEach(pair => {
-                            if (!groups[pair.group]) groups[pair.group] = [];
-                            groups[pair.group].push(pair.val);
-                        });
-
-                        const groupNames = Object.keys(groups);
-                        const k = groupNames.length;
-                        const N = validPairs.length;
-
-                        if (k >= 2 && N > k) {
-                            try {
-                                // 1. Calculate the mean for each group
-                                const groupMeans = {};
-                                groupNames.forEach(g => {
-                                    groupMeans[g] = ss.mean(groups[g]);
-                                });
-
-                                // 2. Compute absolute deviations (Z_ij)
-                                const Z = {};
-                                let globalZSum = 0;
-                                let globalZCount = 0;
-                                groupNames.forEach(g => {
-                                    Z[g] = groups[g].map(val => Math.abs(val - groupMeans[g]));
-                                    globalZSum += ss.sum(Z[g]);
-                                    globalZCount += Z[g].length;
-                                });
-
-                                const globalZMean = globalZSum / globalZCount;
-
-                                // 3. Compute W (F-statistic for One-Way ANOVA on Z_ij)
-                                let SSTR = 0; // Treatment Sum of Squares
-                                let SSE = 0;  // Error Sum of Squares
-
-                                groupNames.forEach(g => {
-                                    const n_i = Z[g].length;
-                                    const mean_Z_i = ss.mean(Z[g]);
-                                    
-                                    SSTR += n_i * Math.pow(mean_Z_i - globalZMean, 2);
-
-                                    Z[g].forEach(z_ij => {
-                                        SSE += Math.pow(z_ij - mean_Z_i, 2);
-                                    });
-                                });
-
-                                const df1 = k - 1;
-                                const df2 = N - k;
-
-                                const MSTR = SSTR / df1;
-                                const MSE = SSE / df2;
-
-                                const W = MSTR / MSE;
-
-                                // 4. Compute P-value using F-distribution
-                                // jStat.centralF.cdf(x, df1, df2) gives P(X <= x)
-                                // We want the upper tail P(X > x)
-                                const pValLevene = 1 - jStat.centralF.cdf(W, df1, df2);
-
-                                result.homogeneity = `p=${pValLevene.toFixed(4)}`;
-                                result.isHomogeneous = pValLevene < 0.05 ? "No" : "Yes"; // p < 0.05 -> variances are NOT equal
-
-                                // Recommendation Logic
-                                const normal = result.isNormal === "Yes" || result.isNormal === "Yes (Approx)";
-                                const homog = result.isHomogeneous === "Yes";
-                                
-                                if (k === 2) {
-                                    if (normal) {
-                                        result.recommendedTest = homog ? "indTTest" : "welchTTest";
-                                    } else {
-                                        result.recommendedTest = "mannWhitneyU";
-                                    }
-                                } else if (k > 2) {
-                                    if (normal) {
-                                        result.recommendedTest = homog ? "oneWayAnova" : "welchAnova";
-                                    } else {
-                                        result.recommendedTest = "kruskalWallis";
-                                    }
-                                }
-
-                            } catch (err) {
-                                console.error("Levene's Test error:", err);
-                                result.isHomogeneous = "Error";
-                                result.homogeneity = "Error";
-                                result.recommendedTest = "Error"
-                            }
-                        } else {
+                        const cmp = compareGroups(data, header, groupingVariable);
+                        if (cmp.error) {
                             result.isHomogeneous = "N/A";
-                            result.homogeneity = k < 2 ? "Need 2+ groups" : "Not enough data";
-                            result.recommendedTest = "-"
+                            result.homogeneity = cmp.error === 'needTwoGroups' ? "Need 2+ groups" : "Not enough data";
+                        } else {
+                            result.homogeneity = `p=${cmp.levene.p.toFixed(4)}`;
+                            result.isHomogeneous = cmp.equalVar ? "Yes" : "No";
+                            result.recommendedTest = cmp.result.test;
                         }
-                    } else {
-                        // No grouping variable selected
-                        result.isHomogeneous = "-";
-                        result.homogeneity = "-";
-                        result.recommendedTest = "-"
                     }
                 }
             }

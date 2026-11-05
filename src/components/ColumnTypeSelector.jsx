@@ -4,7 +4,7 @@ import { ArrowRight, CheckCircle2, HelpCircle } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useLanguage } from '../context/LanguageContext';
 
-export default function ColumnTypeSelector({ data, headers, onConfirm }) {
+export default function ColumnTypeSelector({ data, headers, onConfirm, initialTypes: sharedTypes }) {
     const { t } = useLanguage();
     const [columnTypes, setColumnTypes] = useState({});
 
@@ -38,9 +38,11 @@ export default function ColumnTypeSelector({ data, headers, onConfirm }) {
                     initialTypes[header] = 'nominal';
                 }
             }
+            // A shared analysis decides the type of every column it knows by name.
+            if (sharedTypes?.[header]) initialTypes[header] = sharedTypes[header];
         });
         setColumnTypes(initialTypes);
-    }, [data, headers]);
+    }, [data, headers, sharedTypes]);
 
     const handleTypeChange = (header, type) => {
         setColumnTypes(prev => ({

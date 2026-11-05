@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { readShareFromHash } from './utils/share';
 import Layout from './components/Layout';
 import FileUpload from './components/FileUpload';
 import ColumnTypeSelector from './components/ColumnTypeSelector';
@@ -10,6 +11,7 @@ function App() {
   const [data, setData] = useState(null);
   const [columnTypes, setColumnTypes] = useState({});
   const [step, setStep] = useState(0); // 0: Upload, 1: Define Columns, 2: Analyze
+  const [shared] = useState(readShareFromHash); // analysis settings from a shared link (#a=...), never data
 
   const { t } = useLanguage();
 
@@ -27,6 +29,7 @@ function App() {
 
         {step === 0 && (
           <div className="mt-8">
+            {shared && <p className="max-w-3xl mx-auto mb-6 text-sm text-blue-800 bg-blue-50 border border-blue-100 rounded-xl p-4 text-center">{t.sharedLoaded}</p>}
             <FileUpload onDataLoaded={(result) => {
               setData(result);
               setStep(1);
@@ -39,6 +42,7 @@ function App() {
             <ColumnTypeSelector
               data={data.data}
               headers={data.headers}
+              initialTypes={shared?.columnTypes}
               onConfirm={(types) => {
                 setColumnTypes(types);
                 setStep(2);
@@ -49,7 +53,7 @@ function App() {
 
         {step === 2 && (
           <div className="mt-8">
-            <AnalysisDashboard data={data.data} columnTypes={columnTypes} />
+            <AnalysisDashboard data={data.data} columnTypes={columnTypes} initialConfig={shared?.config} />
 
             <div className="mt-8 text-center pb-8">
               <button

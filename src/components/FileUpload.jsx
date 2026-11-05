@@ -5,6 +5,7 @@ import { parseFile } from '../utils/fileParser';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+import { demoData } from '../utils/demoData';
 import { useLanguage } from '../context/LanguageContext';
 
 export function cn(...inputs) {
@@ -126,16 +127,7 @@ export default function FileUpload({ onDataLoaded }) {
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        const demoData = {
-                                            headers: ['Age', 'Income', 'Satisfaction Score', 'City'],
-                                            data: Array.from({ length: 50 }, () => ({
-                                                'Age': Math.floor(Math.random() * 60) + 18,
-                                                'Income': Math.floor(Math.random() * 80000) + 20000,
-                                                'Satisfaction Score': Math.floor(Math.random() * 10) + 1,
-                                                'City': ['New York', 'London', 'Berlin', 'Tokyo'][Math.floor(Math.random() * 4)]
-                                            }))
-                                        };
-                                        onDataLoaded(demoData);
+                                        onDataLoaded(demoData());
                                     }}
                                     className="text-sm text-blue-600 hover:text-blue-700 font-medium hover:underline bg-blue-50 px-4 py-2 rounded-lg transition-colors"
                                 >

@@ -19,3 +19,11 @@
   --color-blue-900: #0a223c;
   --color-accent: #2ec4b6;
 }
+
+/* Report tab: print only the report (Print / Save as PDF). */
+@media print {
+  body * { visibility: hidden; }
+  #tabula-report, #tabula-report * { visibility: visible; }
+  #tabula-report { position: absolute; left: 0; top: 0; width: 100%; padding: 0; }
+  header { position: static !important; }
+}

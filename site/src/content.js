@@ -17,7 +17,7 @@ export default {
   ],
   "highlights": [
     "CSV ve Excel, sürükle bırak",
-    "Normallik ve Levene testi, önerilen test",
+    "Doğru testi seçer, çalıştırır, APA raporunu yazar",
     "Türkçe ve İngilizce arayüz"
   ],
   "features": [
@@ -31,15 +31,15 @@ export default {
     },
     {
       "title": "Varsayım kontrolleri",
-      "text": "Jarque-Bera normallik p değeri ve seçtiğin grup değişkenine göre Levene varyans homojenliği testi."
+      "text": "Shapiro-Wilk normallik ve Levene varyans homojenliği; eksik veri ve aykırı değerleri gösterir, istersen dışarıda bırakır."
     },
     {
-      "title": "Test önerisi",
-      "text": "Grup sayısı ve varsayımlara göre t testi, Welch, Mann-Whitney, ANOVA ya da Kruskal-Wallis önerir."
+      "title": "Testi çalıştırır",
+      "text": "t testi, Welch, Mann-Whitney, ANOVA, Kruskal-Wallis, eşleştirilmiş testler, ki-kare, Fisher, korelasyon ve regresyon; etki büyüklüğü ve post-hoc testlerle."
     },
     {
-      "title": "Grafikler",
-      "text": "Sütunlar için dağılım grafikleri; görsel olarak dışa aktarılabilir."
+      "title": "Yayına hazır rapor",
+      "text": "APA biçiminde tablolar ve sonuç cümleleri; Word, PDF ya da Excel olarak indir veya teze kopyala."
     },
     {
       "title": "Veri sende kalır",
@@ -57,7 +57,7 @@ export default {
     },
     {
       "title": "Sonuçları oku",
-      "text": "Tablo, varsayım testleri, önerilen test ve grafikler hazır."
+      "text": "Varsayımlar, test sonuçları, grafikler ve APA raporu hazır."
     }
   ],
   "run": "git clone https://github.com/virtusstats/virtusstats.github.io\ncd virtusstats.github.io && npm install\nnpm run dev\nnpm run deploy    # gh-pages'e yayınla",
