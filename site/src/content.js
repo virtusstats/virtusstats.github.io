@@ -4,7 +4,7 @@ export default {
   "lang": "tr",
   "badge": "Web uygulaması",
   "tagline": "Veri dosyanı bırak, tablon hazır.",
-  "description": "Tabula bir CSV ya da Excel dosyasını tarayıcıda okur. Her sütun için ölçek türünü seçersin; ortalama, medyan, çeyrekler, standart sapma, normallik ve gruplar arası varyans homojenliği tablosu ile grafikler anında gelir. Dosya hiçbir yere yüklenmez.",
+  "description": "Tabula bir CSV ya da Excel dosyasını tarayıcıda okur. Her sütunun ölçek türünü seçersin; varsayımlar kontrol edilir, doğru test seçilip çalıştırılır ve sonuçlar APA biçiminde rapora dökülür. Dosya hiçbir yere yüklenmez.",
   "ctas": [
     {
       "label": "Uygulamayı aç",
