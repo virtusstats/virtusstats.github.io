@@ -334,17 +334,18 @@ export function linearRegression(X, y) {
 /** Logistic regression by Newton-Raphson (IRLS). y must be 0/1. */
 export function logisticRegression(X, y) {
   const D = withIntercept(X), n = D.length;
-  let beta = new Array(D[0].length).fill(0), inv = null;
+  let beta = new Array(D[0].length).fill(0), inv = null, converged = false;
   const prob = row => 1 / (1 + Math.exp(-sum(row.map((v, j) => v * beta[j]))));
-  for (let it = 0; it < 50; it++) {
+  for (let it = 0; it < 50 && !converged; it++) {
     const mu = D.map(prob);
     inv = invert(xtwx(D, mu.map(m => m * (1 - m))));
     if (!inv) return null;
     const g = xtv(D, y.map((v, i) => v - mu[i]));
     const step = inv.map(row => sum(row.map((v, j) => v * g[j])));
     beta = beta.map((b, j) => b + step[j]);
-    if (Math.max(...step.map(Math.abs)) < 1e-10) break;
+    converged = Math.max(...step.map(Math.abs)) < 1e-8;
   }
+  if (!converged) return null; // (quasi-)complete separation: the coefficients keep growing without bound
   const mu = D.map(prob);
   const ll = sum(y.map((v, i) => v ? Math.log(mu[i]) : Math.log(1 - mu[i])));
   const p0 = mean(y), ll0 = n * (p0 * Math.log(p0) + (1 - p0) * Math.log(1 - p0));

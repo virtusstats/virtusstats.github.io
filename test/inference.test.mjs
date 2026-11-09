@@ -28,8 +28,8 @@ test('k-group tests and post-hoc', () => {
   near(I.oneWayAnova([a, b, c]).F, 49.50112855); near(I.oneWayAnova([a, b, c]).p, 9.296156602e-10, 1e-3);
   const w = I.welchAnova([a, b, c]); near(w.F, 56.10400162); near(w.df2, 17.07175134); near(w.p, 3.124715399e-08, 1e-3);
   const k = I.kruskalWallis([a, b, c]); near(k.H, 22.55802246); near(k.p, 1.263536122e-05, 1e-3);
-  I.tukeyHSD([a, b, c]).forEach((r, i) => near(r.p, [0.0002683193098, 5.639785112e-06, 4.757954031e-10][i], 2e-2));
-  I.gamesHowell([a, b, c]).forEach((r, i) => near(r.p, [0.0004667001108, 5.391543638e-05, 7.561829318e-08][i], 2e-2));
+  I.tukeyHSD([a, b, c]).forEach((r, i) => near(r.p, [0.0002683193098, 5.639785112e-06, 4.757954031e-10][i], 1e-2));
+  I.gamesHowell([a, b, c]).forEach((r, i) => near(r.p, [0.0004667001108, 5.391543638e-05, 7.561829318e-08][i], 1e-2));
   I.dunn([a, b, c]).forEach((r, i) => near(r.p, [0.04094350738, 0.02639746374, 6.187118964e-06][i]));
 });
 
